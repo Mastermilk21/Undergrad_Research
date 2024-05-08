@@ -36,12 +36,31 @@ class Lightcurve:
             return
         max_frequency = 1 / cadence_hours
         frequency = np.linspace(0.01, max_frequency, 10000)
-        power = ls.power(frequency, normalization='standard')  
-        period = 24 / frequency 
-        print("the power is", power, "the period os", period)
+        self.power = ls.power(frequency, normalization='standard')  
+        self.period = 24 / frequency 
+        print("the power is", self.power, "the period os", self.period)
 
-    def print_plot(self):
+    def print_lombscargle(self):
+        plt.figure(figsize=(10, 5))
+        plt.plot(self.period, self.power, color='blue', label='Lomb-Scargle Periodogram')
+        plt.xlabel('Period (hours)')
+        plt.ylabel('Lomb-Scargle Power')
+        plt.xlim(0, 650)  
+        plt.title('Lomb-Scargle Periodogram')
+        plt.grid(True)
         
-         
+        peaks, _ = find_peaks(self.power, height=0)
+        print("Significant peaks:")
+        for peak_index in peaks:
+            peak_period = self.period[peak_index]
+            peak_power = self.power[peak_index]
+        print(f"Period: {peak_period:.2f} hours, Power: {peak_power:.2f}")
 
+        peaks, _ = find_peaks(self.power, height=0)
+        plt.plot(self.period[peaks], self.power[peaks], 'ro', markersize=5, label='Significant Peaks')
     
+        for peak_index in peaks:
+            plt.plot([self.period[peak_index], self.period[peak_index]], [0, self.power[peak_index]], 'r--', linewidth=1)
+
+        plt.legend()  
+        plt.show()
