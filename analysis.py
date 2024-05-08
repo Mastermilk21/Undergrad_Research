@@ -40,7 +40,7 @@ class Lightcurve:
         self.period = 24 / frequency 
         print("the power is", self.power, "the period os", self.period)
 
-    def print_lombscargle(self):
+    def plot_lombscargle(self):
         plt.figure(figsize=(10, 5))
         plt.plot(self.period, self.power, color='blue', label='Lomb-Scargle Periodogram')
         plt.xlabel('Period (hours)')
@@ -64,3 +64,21 @@ class Lightcurve:
 
         plt.legend()  
         plt.show()
+
+    def plot_combined_lightcurve_lombscargle(self):
+        plt.figure(figsize=(20, 5))
+
+        plt.subplot(1, 2, 1)  # Plot light curve
+        plt.title('Light Curve')
+        self.plot_lightcurve()
+
+        plt.subplot(1, 2, 2)  # Plot Lomb-Scargle periodogram
+        plt.title('Lomb-Scargle Periodogram')
+        self.lombscargle(self.cadence)
+        self.plot_lombscargle()
+        plt.tight_layout()
+        plt.show()
+
+        
+
+        
