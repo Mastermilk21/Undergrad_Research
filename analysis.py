@@ -82,8 +82,13 @@ class Lightcurve:
         plt.ylabel('Lomb-Scargle Power')
         plt.xlim(0, 650)  
         plt.title("Lomb-Scargle Periodogram")
+        peaks, _ = find_peaks(self.power, height=0)
+        plt.plot(self.period[peaks], self.power[peaks], 'ro', markersize=5, label='Significant Peaks')
+    
+        for peak_index in peaks:
+            plt.plot([self.period[peak_index], self.period[peak_index]], [0, self.power[peak_index]], 'r--', linewidth=1)
         plt.legend()
-        
+        plt.tight_layout()
         plt.show()
 
         
