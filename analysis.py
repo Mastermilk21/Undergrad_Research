@@ -80,7 +80,7 @@ class Lightcurve:
         plt.plot(self.period, self.power, label="Lomb-Scargle Periodogram")
         plt.xlabel('Period (hours)')
         plt.ylabel('Lomb-Scargle Power')
-        plt.xlim(0, 650)  
+        plt.xlim(0, 1000)  
         plt.title("Lomb-Scargle Periodogram")
         peaks, _ = find_peaks(self.power, height=0)
         plt.plot(self.period[peaks], self.power[peaks], 'ro', markersize=5, label='Significant Peaks')
