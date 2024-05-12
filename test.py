@@ -8,5 +8,5 @@ file_path = r"c:\Users\eitan\code repos\data\extracted tarballs\sector26\cam4_cc
 analyze = Lightcurve(file_path)
 #analyze.plot_lightcurve()
 analyze.lombscargle(0.5)
-analyze.plot_lombscargle()
-analyze.plot_combined_lightcurve_lombscargle()
+#analyze.plot_lombscargle()
+analyze.plot_combined()
