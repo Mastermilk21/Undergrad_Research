@@ -14,7 +14,9 @@ class Lightcurve:
         data = np.loadtxt(self.file_path)
         self.time = data[:, 1]  
         self.magnitude = data[:, 4] 
+        plt.figure(figsize=(10, 5))
         plt.plot(self.time, self.magnitude, color='blue')
+        plt.ylim(max(self.magnitude), min(self.magnitude))
         plt.xlabel('Time')
         plt.ylabel('Magnitude')
         plt.title('Light Curve')
@@ -35,7 +37,7 @@ class Lightcurve:
             print("Invalid input for cadence. Please enter a valid numeric value.")
             return
         max_frequency = 1 / self.cadence_hours
-        frequency = np.linspace(0.01, max_frequency, 10000)
+        frequency = np.linspace(0.01, max_frequency, 650)
         self.power = ls.power(frequency, normalization='standard')  
         self.period = 24 / frequency 
         print("the power is", self.power, "the period is", self.period)
@@ -45,7 +47,7 @@ class Lightcurve:
         plt.plot(self.period, self.power, color='blue', label='Lomb-Scargle Periodogram')
         plt.xlabel('Period (hours)')
         plt.ylabel('Lomb-Scargle Power')
-        plt.xlim(0, 650)  
+        plt.xlim(0, 10000)  
         plt.title('Lomb-Scargle Periodogram')
         plt.grid(True)
         
@@ -70,6 +72,7 @@ class Lightcurve:
         plt.figure(figsize=(20, 5))
         plt.subplot(1,2,1)
         plt.plot(self.time, self.magnitude, label="Light Curve")
+        plt.ylim(max(self.magnitude), min(self.magnitude))
         plt.xlabel("Time")
         plt.ylabel("Magnitude")
         plt.title("Light Curve")
