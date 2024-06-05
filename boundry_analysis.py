@@ -34,7 +34,7 @@ class BoundryLightCurve:
         plt.show()
         
 
-    def lombscargle(self, cadence):
+    def plot_lombscargle(self, cadence):
        
         self.time = self.data[:, 1]  
         self.magnitude = self.data[:, 4] 
@@ -51,11 +51,6 @@ class BoundryLightCurve:
         self.power = ls.power(self.frequency, normalization='standard')  
         self.period = 24 / self.frequency 
         print("the power is", self.power, "the period is", self.period)
-        
-        
-        return self.period, self.power
-
-    def plot_lombscargle(self):
         
         plt.figure(figsize=(20, 5))
         plt.plot(self.period, self.power, color='blue', label='Lomb Scargle Periodogram')
@@ -113,11 +108,13 @@ class BoundryLightCurve:
     def phasefold(self):
         significant_peak_index = self.peaks[np.argmax(self.power[self.peaks])]
         peak_period = self.period[significant_peak_index]
-        print ('peak period is:', peak_period)
+        print('peak period is:', peak_period)
         phi = (self.data[:, 1] / peak_period) % 1
         ls_phasefold = LombScargle(phi, self.magnitude)
         self.phasefold_power = ls_phasefold.power(self.frequency, normalization='standard')  
         self.phasefold_period = 24 / self.frequency 
+
+
         plt.figure(figsize=(20, 5))
         plt.subplot(1, 2, 1)
         plt.plot(phi, self.data[:, 4], label='Light Curve')
@@ -136,7 +133,7 @@ class BoundryLightCurve:
         plt.title(f'Phase Folded Lomb Scargle Periodogram from {self.x_min} to {self.x_max}')
         plt.grid(True)
         plt.legend()
-        self.phasefolded_peaks, _ = find_peaks(self.phasefold_power)
+        self.phasefolded_peaks, _ = find_peaks(self.phasefold_power , height=0.20)
         print("Significant phasefolded peaks:")
         for peak_phasefold_index in self.phasefolded_peaks:
             peak_phasefold_period = self.phasefold_period[peak_phasefold_index]
