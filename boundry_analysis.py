@@ -37,10 +37,10 @@ class BoundryLightCurve:
     def lombscargle(self):
        
         self.time = self.data[:, 1]
-        self.mean_time = np.diff(self.data[:, 1])
+        self.cadence = np.diff(self.data[:, 1])
         self.magnitude = self.data[:, 4] 
         ls = LombScargle(self.time, self.magnitude)
-        self.max_frequency = 0.5 / np.mean(self.mean_time)
+        self.max_frequency = 0.5 / np.mean(self.cadence)
         self.frequency = np.linspace(0.0001, self.max_frequency, 10000)
         self.power = ls.power(self.frequency)  
         self.period_days = 1 / self.frequency
@@ -102,4 +102,3 @@ class BoundryLightCurve:
         plt.legend()
         plt.gca().invert_yaxis()
         plt.show()
-        
