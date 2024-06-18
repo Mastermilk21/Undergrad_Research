@@ -46,16 +46,15 @@ class BoundryLightCurve:
         except ValueError:
             print("Invalid input for cadence. Please enter a valid numeric value.")
             return
-        self.max_frequency = 1 / self.cadence_hours
-        self.frequency = np.linspace(0.01, self.max_frequency, 650)
-        self.power = ls.power(self.frequency, normalization='standard')  
-        self.period = 24 / self.frequency 
-        print("the power is", self.power, "the period is", self.period)
+        self.max_frequency = 0.5 / self.cadence_hours
+        self.frequency = np.linspace(0.0001, self.max_frequency, 650)
+        self.power = ls.power(self.frequency)  
+        self.period_days = 1 / self.frequency 
+        
         
         plt.figure(figsize=(20, 5))
-        plt.plot(self.period, self.power, color='blue', label='Lomb Scargle Periodogram')
-        plt.xlabel('Period (hours)')
-        plt.xlim(0,650)
+        plt.plot(self.period_days, self.power, color='blue', label='Lomb Scargle Periodogram')
+        plt.xlabel('Period (days)')
         plt.ylabel('Lomb-Scargle Power')
         plt.title(f'Lomb Scargle from {self.x_min} to {self.x_max}')
         plt.grid(True)
@@ -63,18 +62,18 @@ class BoundryLightCurve:
         self.peaks, _ = find_peaks(self.power)
         print("Significant peaks:")
         for peak_index in self.peaks:
-            peak_period = self.period[peak_index]
+            peak_period = self.period_days[peak_index]
             peak_power = self.power[peak_index]
-            print(f"Period: {peak_period:.2f} hours, Power: {peak_power:.2f}")
+            print(f"Period: {peak_period:.5f} days, Power: {peak_power:.5f}")
         self.peaks, _ = find_peaks(self.power, height=0)
-        plt.plot(self.period[self.peaks], self.power[self.peaks], 'ro', markersize=5, label='Significant Peaks')
+        plt.plot(self.period_days[self.peaks], self.power[self.peaks], 'ro', markersize=5, label='Significant Peaks')
 
         for peak_index in self.peaks:
-            plt.plot([self.period[peak_index], self.period[peak_index]], [0, self.power[peak_index]], 'r--', linewidth=1)
+            plt.plot([self.period_days[peak_index], self.period_days[peak_index]], [0, self.power[peak_index]], 'r--', linewidth=1)
         
         plt.legend()  
         plt.show()
-        return self.period, self.power, self.peaks
+        return self.period_days, self.power, self.peaks
 
 
     def plot_combined(self):
@@ -84,66 +83,48 @@ class BoundryLightCurve:
         plt.plot(self.data[:, 1], self.data[:, 4], label='Light Curve')
         plt.xlabel("Time")
         plt.ylabel("Magnitude")
-        plt.title(f'Lomb Scargle from {self.x_min} to {self.x_max}')
+        plt.title(f'Light Curve from {self.x_min} to {self.x_max}')
         plt.legend()
         plt.gca().invert_yaxis()
 
         plt.subplot(1, 2, 2)
-        plt.plot(self.period, self.power, color='blue', label='Lomb Scargle Periodogram')
+        plt.plot(self.period_days, self.power, color='blue', label='Lomb Scargle Periodogram')
         plt.xlabel("Period (hours)")
         plt.ylabel("Power")
-        plt.xlim(0,650)
+        plt.xlim(0,27)
         plt.title(f'Lomb Scargle from {self.x_min} to {self.x_max}')
         plt.legend()
         self.peaks, _ = find_peaks(self.power, height=0)
-        plt.plot(self.period[self.peaks], self.power[self.peaks], 'ro', markersize=5, label='Significant Peaks')
+        plt.plot(self.period_days[self.peaks], self.power[self.peaks], 'ro', markersize=5, label='Significant Peaks')
     
         for peak_index in self.peaks:
-            plt.plot([self.period[peak_index], self.period[peak_index]], [0, self.power[peak_index]], 'r--', linewidth=1)
-        plt.legend()
+            plt.plot([self.period_days[peak_index], self.period_days[peak_index]], [0, self.power[peak_index]], 'r--', linewidth=1)
         plt.tight_layout()
         plt.show()
 
 
     def phasefold(self):
+
+       
+        self.time = self.data[:, 1]  
+        self.magnitude = self.data[:, 4] 
         significant_peak_index = self.peaks[np.argmax(self.power[self.peaks])]
-        peak_period = self.period[significant_peak_index]
+        peak_period = self.period_days[significant_peak_index]
         print('peak period is:', peak_period)
-        phi = (self.data[:, 1] / peak_period) % 1
-        ls_phasefold = LombScargle(phi, self.magnitude)
-        self.phasefold_power = ls_phasefold.power(self.frequency, normalization='standard')  
-        self.phasefold_period = 24 / self.frequency 
 
-
+        phase = (self.time % peak_period) / peak_period
+        id = np.argsort(phase)
+        
+        phase_sorted = phase[id]
+        self.magnitude_sorted = self.magnitude[id]
+        
         plt.figure(figsize=(20, 5))
         plt.subplot(1, 2, 1)
-        plt.plot(phi, self.data[:, 4], label='Light Curve')
+        plt.plot(phase_sorted, self.magnitude_sorted, label='Light Curve')
         plt.xlabel("Phase")
         plt.ylabel("Magnitude")
         plt.title(f'Phase Folded Light Curve from {self.x_min} to {self.x_max}')
         plt.legend()
         plt.gca().invert_yaxis()
-
-
-        plt.subplot(1, 2, 2)
-        plt.plot(self.phasefold_period, self.phasefold_power, color='blue', label='Phase Folded Lomb Scargle Periodogram')
-        plt.xlabel('Period (hours)')
-        plt.xlim(0,200)
-        plt.ylabel('Lomb-Scargle Power')
-        plt.title(f'Phase Folded Lomb Scargle Periodogram from {self.x_min} to {self.x_max}')
-        plt.grid(True)
-        plt.legend()
-        self.phasefolded_peaks, _ = find_peaks(self.phasefold_power , height=0.20)
-        print("Significant phasefolded peaks:")
-        for peak_phasefold_index in self.phasefolded_peaks:
-            peak_phasefold_period = self.phasefold_period[peak_phasefold_index]
-            peak_phasefold_power = self.phasefold_power[peak_phasefold_index]
-            print(f"Period: {peak_phasefold_period:.2f} hours, Power: {peak_phasefold_power:.2f}")
-        self.phasefold_peaks, _ = find_peaks(self.phasefold_power, height=0)
-        plt.plot(self.period[self.phasefold_peaks], self.phasefold_power[self.phasefold_peaks], 'ro', markersize=5, label='Significant Peaks')
-
-        for peak_phasefold_index in self.phasefold_peaks:
-            plt.plot([self.period[peak_phasefold_index], self.period[peak_phasefold_index]], [0, self.phasefold_power[peak_phasefold_index]], 'r--', linewidth=1)
         plt.show()
-
-     
+        
