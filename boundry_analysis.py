@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.polynomial import Polynomial, Chebyshev
 import matplotlib.pyplot as plt
 from astropy.timeseries import LombScargle
 from scipy.signal import find_peaks
@@ -49,8 +50,8 @@ class BoundryLightCurve:
 
     def plot_combined(self):
         self.frequency, self.period_days, self.power = self.lombscargle()
-        plt.figure(figsize=(20, 5))
-        plt.subplot(1, 2, 1)
+        plt.figure(figsize=(20, 10))
+        plt.subplot(1, 3, 1)
         plt.plot(self.data[:, 1], self.data[:, 4], label='Light Curve')
         plt.xlabel("Time")
         plt.ylabel("Magnitude")
@@ -58,9 +59,9 @@ class BoundryLightCurve:
         plt.legend()
         plt.gca().invert_yaxis()
 
-        plt.subplot(1, 2, 2)
+        plt.subplot(1, 3, 2)
         plt.plot(self.period_days, self.power, color='blue', label='Lomb Scargle Periodogram')
-        plt.xlabel("Period (hours)")
+        plt.xlabel("Period (days)")
         plt.ylabel("Power")
         plt.xlim(0,27)
         plt.title(f'Lomb Scargle from {self.x_min} to {self.x_max}')
@@ -75,11 +76,6 @@ class BoundryLightCurve:
         for peak_index in self.peaks:
             plt.plot([self.period_days[peak_index], self.period_days[peak_index]], [0, self.power[peak_index]], 'r--', linewidth=1)
         plt.tight_layout()
-        plt.show()
-        
-
-    def phasefold(self):
-
        
         self.time = self.data[:, 1]  
         self.magnitude = self.data[:, 4] 
@@ -93,12 +89,35 @@ class BoundryLightCurve:
         phase_sorted = phase[id]
         self.magnitude_sorted = self.magnitude[id]
         
-        plt.figure(figsize=(20, 5))
-        plt.subplot(1, 2, 1)
+        plt.subplot(1, 3, 3)
         plt.plot(phase_sorted, self.magnitude_sorted, label='Light Curve')
         plt.xlabel("Phase")
         plt.ylabel("Magnitude")
         plt.title(f'Phase Folded Light Curve from {self.x_min} to {self.x_max}')
         plt.legend()
         plt.gca().invert_yaxis()
+        plt.show()
+
+    def detrend(self):
+        self.time = self.data[:, 1]
+        self.magnitude = self.data[:, 4] 
+
+        poly_fit = Polynomial.fit(self.time, self.magnitude, deg=3)
+        poly_trend = poly_fit(self.time)
+        cheb_fit = Chebyshev.fit(self.time, self.magnitude, deg=4)
+        cheb_trend = cheb_fit(self.time)
+
+        detrended_poly = self.magnitude - poly_trend
+        detrended_cheb = self.magnitude - cheb_trend
+
+        plt.plot(self.time, self.magnitude, 'o')
+        plt.plot(self.time, poly_trend, '-', label='Polynomial Fit')
+        plt.plot(self.time, cheb_trend, '--', label='Chebyshev Fit')
+        plt.gca().invert_yaxis()
+        plt.legend()
+        plt.show()
+        plt.plot(self.time, detrended_poly, label='Detrended with Polynomial')
+        plt.legend()
+        plt.plot(self.time, detrended_cheb,'orange', label='Detrended with Chebyshev')
+        plt.legend()
         plt.show()
