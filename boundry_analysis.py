@@ -4,13 +4,18 @@ import matplotlib.pyplot as plt
 from astropy.timeseries import LombScargle
 from scipy.signal import find_peaks
 
+
 class BoundryLightCurve:
     def __init__(self, filename, x_min=None, x_max=None, cadence=None):
         self.filename = filename
         self.x_min = x_min
         self.x_max = x_max
+        self.original_data = self._read_original_data()
         self.data = self._read_data()
         self.cadence = cadence
+
+    def _read_original_data(self):
+        return np.loadtxt(self.filename)
         
     def _read_data(self):
         data = np.loadtxt(self.filename)
@@ -25,17 +30,14 @@ class BoundryLightCurve:
             return data
         
     def plot_lightcurve(self):
-        self.poly_trend = self.detrend()
-        self.time = self.data[:, 1]
-        self.magnitude = self.data[:, 4] 
+        self.time = self.original_data[:, 1]
+        self.magnitude = self.original_data[:, 4] 
         plt.figure(figsize=(10, 5))
-        plt.plot(self.time, self.magnitude, label='Lightcurve')
-        plt.plot(self.time, self.poly_trend, '-', label='Polynomial Fit')
+        plt.plot(self.original_data[:, 1], self.original_data[:, 4] , label='Lightcurve')
         plt.gca().invert_yaxis()
         plt.xlabel('Time')
         plt.ylabel('Magnitude')
         plt.title(f'Light Curve from {self.x_min} to {self.x_max}')
-        plt.grid(True)
         plt.show()
 
     def detrend(self):
@@ -67,8 +69,9 @@ class BoundryLightCurve:
 
 
     def plot_combined(self):
+        
         self.frequency, self.period_days, self.power = self.lombscargle()
-        plt.figure(figsize=(25, 8))
+        plt.figure(figsize=(20, 8))
         plt.subplot(1, 4, 1)
         plt.plot(self.data[:, 1], self.data[:, 4], label='Light Curve')
         plt.plot(self.time, self.poly_trend, '-', label='Polynomial Fit')
@@ -83,7 +86,7 @@ class BoundryLightCurve:
         plt.plot(self.period_days, self.power, color='blue', label='Lomb Scargle Periodogram')
         plt.xlabel("Period (days)")
         plt.ylabel("Power")
-        plt.xlim(0,5)
+        plt.xlim(0,27)
         plt.title(f'Lomb Scargle from {self.x_min} to {self.x_max}')
         plt.legend()
         self.peaks, _ = find_peaks(self.power, height=0.02)
@@ -120,12 +123,10 @@ class BoundryLightCurve:
         
 
         plt.subplot(1, 4, 4)
-        plt.plot(self.time, self.detrended_cheb_magnitude, label='Light Curve')
+        plt.plot(self.time, self.detrended_poly_magnitude, label='Light Curve')
         plt.xlabel("Time")
         plt.ylabel("Magnitude")
         plt.title(f'Detrended Light Curve from {self.x_min} to {self.x_max}')
         plt.legend()
         plt.gca().invert_yaxis()
         plt.show()
-
-    
