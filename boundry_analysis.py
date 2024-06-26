@@ -69,7 +69,7 @@ class BoundryLightCurve:
 
 
     def plot_combined(self):
-        
+        print("Interval of observation:", self.data[:, 1].min() ,"-", self.data[:, 1].max())
         self.frequency, self.period_days, self.power = self.lombscargle()
         plt.figure(figsize=(20, 8))
         plt.subplot(1, 4, 1)
@@ -86,10 +86,10 @@ class BoundryLightCurve:
         plt.plot(self.period_days, self.power, color='blue', label='Lomb Scargle Periodogram')
         plt.xlabel("Period (days)")
         plt.ylabel("Power")
-        plt.xlim(0,27)
+        plt.xlim(0,1)
         plt.title(f'Lomb Scargle from {self.x_min} to {self.x_max}')
         plt.legend()
-        self.peaks, _ = find_peaks(self.power, height=0.02)
+        self.peaks, _ = find_peaks(self.power, height=0.2)
         plt.plot(self.period_days[self.peaks], self.power[self.peaks], 'ro', markersize=5, label='Significant Peaks')
         print("Significant peaks:")
         for peak_index in self.peaks:
@@ -105,7 +105,7 @@ class BoundryLightCurve:
         self.magnitude = self.data[:, 4] 
         significant_peak_index = self.peaks[np.argmax(self.power[self.peaks])]
         peak_period = self.period_days[significant_peak_index]
-        print('peak period is:', peak_period)
+        print('peak period is:', peak_period, 'days')
 
         phase = (self.time % peak_period) / peak_period
         id = np.argsort(phase)
@@ -130,3 +130,5 @@ class BoundryLightCurve:
         plt.legend()
         plt.gca().invert_yaxis()
         plt.show()
+
+        
