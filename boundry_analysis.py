@@ -72,41 +72,66 @@ class BoundryLightCurve:
         print("Interval of observation:", self.data[:, 1].min() ,"-", self.data[:, 1].max())
         self.frequency, self.period_days, self.power = self.lombscargle()
         plt.figure(figsize=(20, 8))
-        plt.subplot(1, 4, 1)
+        plt.subplot(1, 3, 1)
         plt.plot(self.data[:, 1], self.data[:, 4], label='Light Curve')
         plt.plot(self.time, self.poly_trend, '-', label='Polynomial Fit')
-
         plt.xlabel("Time")
         plt.ylabel("Magnitude")
         plt.title(f'Light Curve from {self.x_min} to {self.x_max}')
         plt.legend()
         plt.gca().invert_yaxis()
 
-        plt.subplot(1, 4, 2)
+        plt.subplot(1, 3, 2)
         plt.plot(self.period_days, self.power, color='blue', label='Lomb Scargle Periodogram')
         plt.xlabel("Period (days)")
         plt.ylabel("Power")
-        plt.xlim(0,1)
+        plt.xscale("log")
+        
         plt.title(f'Lomb Scargle from {self.x_min} to {self.x_max}')
         plt.legend()
-        self.peaks, _ = find_peaks(self.power, height=0.2)
+        self.peaks, _ = find_peaks(self.power, height=0.05)
         plt.plot(self.period_days[self.peaks], self.power[self.peaks], 'ro', markersize=5, label='Significant Peaks')
         print("Significant peaks:")
         for peak_index in self.peaks:
             peak_period_days = self.period_days[peak_index]
             peak_power = self.power[peak_index]
             peak_period_hours = peak_period_days * 24
-            print(f"Period: {peak_period_days:.2f} days, {peak_period_hours:.2f} hours  Power: {peak_power:.2f}")
+            print(f"Period: {peak_period_days:.4f} days, {peak_period_hours:.4f} hours,  Power: {peak_power:.4f}")
         for peak_index in self.peaks:
             plt.plot([self.period_days[peak_index], self.period_days[peak_index]], [0, self.power[peak_index]], 'r--', linewidth=1)
+        
+        if len(self.peaks) < 2:
+            print ("Not enough peaks to calculate beat frequency")
+        else: None
+
+        sorted_peaks = np.argsort(self.power[self.peaks])[::-1]
+
+        self.highest_periodicity = self.period_days[self.peaks][sorted_peaks[0]]
+        self.highest_periodicity_2 = self.period_days[self.peaks][sorted_peaks[1]]
+
+        beat_freq = np.abs(1/self.highest_periodicity - 1/self.highest_periodicity_2)
+        print(f"Beat frequency: {beat_freq: .4f} day^(-1)" )
+
+        plt.subplot(1, 3, 3)
+        plt.plot(self.time, self.detrended_poly_magnitude, label='Light Curve')
+        plt.xlabel("Time")
+        plt.ylabel("Magnitude")
+        plt.title(f'Detrended Light Curve from {self.x_min} to {self.x_max}')
+        plt.legend()
+        plt.gca().invert_yaxis()
         plt.tight_layout()
-       
+        plt.show()
+        return beat_freq
+
+    def phasefold(self):
+
+        
         self.time = self.data[:, 1]  
         self.magnitude = self.data[:, 4] 
         significant_peak_index = self.peaks[np.argmax(self.power[self.peaks])]
         peak_period = self.period_days[significant_peak_index]
         print('peak period is:', peak_period, 'days')
-
+        
         phase = (self.time % peak_period) / peak_period
         id = np.argsort(phase)
         
@@ -117,18 +142,6 @@ class BoundryLightCurve:
         plt.plot(phase_sorted, self.magnitude_sorted, label='Light Curve')
         plt.xlabel("Phase")
         plt.ylabel("Magnitude")
-        plt.title(f'Phase Folded Light Curve from {self.x_min} to {self.x_max}')
+        plt.title(f'Phase Folded Light Curve from {self.x_min} to {self.x_max} using period: {peak_period:.2f} days')
         plt.legend()
         plt.gca().invert_yaxis()
-        
-
-        plt.subplot(1, 4, 4)
-        plt.plot(self.time, self.detrended_poly_magnitude, label='Light Curve')
-        plt.xlabel("Time")
-        plt.ylabel("Magnitude")
-        plt.title(f'Detrended Light Curve from {self.x_min} to {self.x_max}')
-        plt.legend()
-        plt.gca().invert_yaxis()
-        plt.show()
-
-        
