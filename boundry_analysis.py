@@ -3,15 +3,20 @@ from numpy.polynomial import Polynomial, Chebyshev
 import matplotlib.pyplot as plt
 from astropy.timeseries import LombScargle
 from scipy.signal import find_peaks
+from matplotlib.ticker import MaxNLocator
+from matplotlib.ticker import MultipleLocator, FuncFormatter
+from colorama import Fore, Style
 
 class BoundryLightCurve:
-    def __init__(self, filename, x_min=None, x_max=None, cadence=None):
+    def __init__(self, filename, x_min=None, x_max=None, cadence=None, name=None, height=None):
         self.filename = filename
         self.x_min = x_min
+        self.height = height
         self.x_max = x_max
         self.original_data = self._read_original_data()
         self.data = self._read_data()
         self.cadence = cadence
+        self.name = name or filename.split('\\')[-1].split('_')[1]
 
     def _read_original_data(self):
         return np.loadtxt(self.filename)
@@ -45,6 +50,7 @@ class BoundryLightCurve:
         
         plt.tight_layout()
         plt.show()
+        print(self.name)
 
     def detrend(self):
         self.time = self.data[:, 1]
@@ -84,7 +90,7 @@ class BoundryLightCurve:
         axs[0].set_ylabel("Magnitude", fontsize=14)
         axs[0].set_title(f'Light Curve from {self.x_min} to {self.x_max}', fontsize=16)
         axs[0].invert_yaxis()
-        axs[0].legend(fontsize=12)
+        axs[0].legend(fontsize=14)
         axs[0].grid(True, linestyle='--', alpha=0.7)
 
         axs[1].plot(self.period_days, self.power, color='blue', label='Lomb Scargle Periodogram')
@@ -92,10 +98,19 @@ class BoundryLightCurve:
         axs[1].set_ylabel("Power", fontsize=14)
         axs[1].set_xscale("log")
         axs[1].set_title(f'Lomb Scargle from {self.x_min} to {self.x_max}', fontsize=16)
-        axs[1].legend(fontsize=12)
+        axs[1].legend(fontsize=14)
         axs[1].grid(True, linestyle='--', alpha=0.7)
+        inset_ax = fig.add_axes([0.835, 0.45, 0.13, 0.13])  # [left, bottom, width, height]
+        inset_ax.plot(self.data[:, 1], self.data[:, 4], color='r')
+        inset_ax.invert_yaxis()
+        #inset_ax.set_xlabel('Time (days)')
+        #inset_ax.set_ylabel('Magnitude')
+        inset_ax.set_title('Part of Light Curve for Periodogram', fontsize='12')
+        inset_ax.grid(False)
+        inset_ax.set_ylim(19.3, 14)
+        inset_ax.legend(fontsize=9)
 
-        self.peaks, _ = find_peaks(self.power, height=0.01)
+        self.peaks, _ = find_peaks(self.power, height=self.height)
         axs[1].plot(self.period_days[self.peaks], self.power[self.peaks], 'ro', markersize=5, label='Significant Peaks')
         print("Significant peaks:")
         for peak_index in self.peaks:
@@ -113,7 +128,7 @@ class BoundryLightCurve:
         axs[2].invert_yaxis()
         axs[2].legend(fontsize=12)
         axs[2].grid(True, linestyle='--', alpha=0.7)
-
+    
         plt.tight_layout()
         plt.show()
 
@@ -156,6 +171,10 @@ class BoundryLightCurve:
         plt.show()
 
     def bounded_lightcurve(self):
+        plt.rcParams.update({'font.size': 16}) 
+        self.time = self.original_data[:, 1]
+        self.magnitude = self.original_data[:, 4] 
+        self.frequency, self.period_days, self.power = self.lombscargle()
         fig, ax = plt.subplots(figsize=(10, 5))
         ax.plot(self.data[:, 1], self.data[:, 4], label='Light Curve', color='blue')
         ax.plot(self.time, self.poly_trend, '-', label='Polynomial Fit', color='red')
@@ -168,4 +187,66 @@ class BoundryLightCurve:
         
         plt.tight_layout()
         plt.show()
+    
+  
+    def plotposter(self): 
         
+        #plt.rcParams.update({'font.size': 16}) 
+        self.time = self.original_data[:, 1]
+        self.magnitude = self.original_data[:, 4] 
+        self.frequency, self.period_days, self.power = self.lombscargle()
+        fig, axs = plt.subplots(1, 2, figsize=(20, 8))  
+
+        axs[0].plot(self.original_data[:, 1], self.original_data[:, 4], label='Light Curve', color='blue')
+        axs[0].invert_yaxis()
+        axs[0].set_xlabel('Time (days)', fontsize='24')
+        axs[0].set_ylabel('Magnitude',fontsize='24')
+        axs[0].set_title(f'Light Curve of {self.name}', fontsize='26')
+        axs[0].legend(fontsize=19)
+        axs[0].grid(False)
+        #axs[0].set_ylim(19.3,13.8)
+        axs[0].tick_params(axis='both', labelsize=20)
+
+        axs[1].plot(self.period_days, self.power, color='blue', label='Lomb Scargle Periodogram')
+        axs[1].set_xlabel("Period (days)",fontsize='24')
+        axs[1].set_ylabel("Power",fontsize='24')
+        axs[1].set_xscale("log")
+        axs[1].set_title(f'Lomb Scargle Periodogram of {self.name}', fontsize='26')
+        axs[1].grid(False)
+        axs[1].set_xlim(self.period_days.min(),1)
+        axs[1].set_ylim(0, .05)
+        axs[1].legend(fontsize='19')
+        axs[1].tick_params(axis='both', labelsize=20)
+        #tick_locations = [0.05, 0.1]  # Custom tick locations
+        #axs[1].set_xticks(tick_locations)
+
+        inset_ax = fig.add_axes([0.812, 0.58, 0.13, 0.13])  # [left, bottom, width, height]
+        inset_ax.plot(self.data[:, 1], self.data[:, 4], color='r')
+        inset_ax.invert_yaxis()
+        inset_ax.set_xlabel('Time (days)')
+        inset_ax.set_ylabel('Magnitude')
+        inset_ax.set_title('Part of Light Curve for Periodogram', fontsize='16')
+        inset_ax.grid(False)
+        inset_ax.set_ylim(self.data[:, 4].max(), self.data[:, 4].min())  # Adjust for magnitude
+        inset_ax.set_xlim(self.data[:, 1].min(), self.data[:, 1].max())
+        inset_ax.tick_params(axis='both', labelsize=12)
+        
+        
+        #axs[1].set_xticklabels([r'$5 \times 10^{-2}$', r'$10^{-1}$'])
+
+        peak_index = np.argmax(self.power)  
+        peak_period = self.period_days[peak_index] 
+        peak_power = self.power[peak_index]
+        # Position the text box above the legend
+        textstr = f'  Peak Period: {peak_period:.4f} days @ Power: {peak_power:.4f}\n  Second Highest Peak: 0.0785 days @ Power: 0.0196\n Third Highest Peak: '
+        props = dict(boxstyle='round', facecolor='white', alpha=0.2, edgecolor='grey')
+        axs[1].text(0.978, 0.8935, textstr, transform=axs[1].transAxes, fontsize=19, 
+                    verticalalignment='top', bbox=props, ha='right')
+
+
+        plt.tight_layout()  
+        plt.show()
+
+        
+#
+#\n Harmonic 1: 0.0395 days @ Power: 0.1365\n Harmonic 2: 0.0263 days @ Power: 0.0152\n Harmonic 3: 0.0197 days @ Power: 0.0070\n Harmonic 4: 0.0157 days @ Power: 0.0013
