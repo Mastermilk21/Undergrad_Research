@@ -3,14 +3,14 @@ import matplotlib.pyplot as plt
 
 from boundry_analysis import BoundryLightCurve
 
-filename = r"c:\Users\eitan\code repos\data\extracted tarballs\sector54\lc_2022pix_cleaned.txt"
+filename = r"c:\Users\eitan\code repos\data\extracted tarballs\sector28\lc_2020rtt_cleaned.txt"
 
-x_min = 2781
-x_max = 2782
-cadence = 0.5
-analyze = BoundryLightCurve(filename, x_min=x_min, x_max=x_max)
+x_min = 2075    
+x_max = 2078
+height = 0.015
+analyze = BoundryLightCurve(filename, x_min=x_min, x_max=x_max, height=height)
 analyze.plot_lightcurve()
-
-analyze.plot_lombscargle(cadence)
 analyze.plot_combined()
-analyze.phasefold()
+#analyze.phasefold()
+analyze.plotposter()
+#analyze.bounded_lightcurve()
