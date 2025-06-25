@@ -214,7 +214,7 @@ class BoundryLightCurve:
         axs[1].set_title(f'Lomb Scargle Periodogram of {self.name}', fontsize='26')
         axs[1].grid(False)
         axs[1].set_xlim(self.period_days.min(),1)
-        axs[1].set_ylim(0, .05)
+        #axs[1].set_ylim(0, .05)
         axs[1].legend(fontsize='19')
         axs[1].tick_params(axis='both', labelsize=20)
         #tick_locations = [0.05, 0.1]  # Custom tick locations
@@ -246,7 +246,80 @@ class BoundryLightCurve:
 
         plt.tight_layout()  
         plt.show()
+        self.peaks, _ = find_peaks(self.power, height=self.height)
 
+# Sort the peaks by power (descending order)
+        sorted_peaks = sorted(self.peaks, key=lambda idx: self.power[idx], reverse=True)
+
+        axs[1].plot(self.period_days[self.peaks], self.power[self.peaks], 'ro', markersize=5, label='Significant Peaks')
+
+        print("Significant peaks (sorted by power):")
+        for peak_index in sorted_peaks:
+         peak_period_days = self.period_days[peak_index]
+         peak_power = self.power[peak_index]
+         peak_period_hours = peak_period_days * 24
+         print(f"Period: {peak_period_days:.4f} days, {peak_period_hours:.4f} hours, Power: {peak_power:.4f}")
+
+# Also plot dashed lines for the peaks
+        for peak_index in sorted_peaks:
+            axs[1].plot([self.period_days[peak_index], self.period_days[peak_index]], [0, self.power[peak_index]], 'r--', linewidth=1)
+
+        self.peaks, _ = find_peaks(self.power, height=self.height)
+
+# S          
         
 #
 #\n Harmonic 1: 0.0395 days @ Power: 0.1365\n Harmonic 2: 0.0263 days @ Power: 0.0152\n Harmonic 3: 0.0197 days @ Power: 0.0070\n Harmonic 4: 0.0157 days @ Power: 0.0013
+
+
+    def newfastplot(self):
+        print("Object name ",self.name)
+        print("Interval of observation:", self.data[:, 1].min() ,"-", self.data[:, 1].max())
+
+        self.frequency, self.period_days, self.power = self.lombscargle()
+
+        fig, axs = plt.subplots(1, 2, figsize=(20, 8))
+
+        axs[0].plot(self.data[:, 1], self.data[:, 4], label='Light Curve', color='blue')
+        axs[0].plot(self.time, self.poly_trend, '-', label='Polynomial Fit', color='red')
+        axs[0].set_xlabel("Time", fontsize=14)
+        axs[0].set_ylabel("Magnitude", fontsize=14)
+        axs[0].set_title(f'Light Curve from {self.x_min} to {self.x_max}', fontsize=16)
+        axs[0].invert_yaxis()
+        axs[0].legend(fontsize=14)
+        axs[0].grid(True, linestyle='--', alpha=0.7)
+        self.peaks, _ = find_peaks(self.power, height=self.height)
+        sorted_peaks = sorted(self.peaks, key=lambda idx: self.power[idx], reverse=True)
+
+        axs[1].plot(self.period_days[self.peaks], self.power[self.peaks], 'ro', markersize=5, label='Significant Peaks')
+
+        for peak_index in sorted_peaks:
+         peak_period_days = self.period_days[peak_index]
+         peak_power = self.power[peak_index]
+         peak_period_hours = peak_period_days * 24
+         print(f"Period: {peak_period_days:.4f} days, {peak_period_hours:.4f} hours, Power: {peak_power:.4f}")
+
+# Also plot dashed lines for the peaks
+        for peak_index in sorted_peaks:
+            axs[1].plot([self.period_days[peak_index], self.period_days[peak_index]], [0, self.power[peak_index]], 'r--', linewidth=1)
+
+        self.peaks, _ = find_peaks(self.power, height=self.height)  
+        axs[1].plot(self.period_days, self.power, color='blue', label='Lomb Scargle Periodogram')
+        axs[1].set_xlabel("Period (days)", fontsize=14)
+        axs[1].set_ylabel("Power", fontsize=14)
+        axs[1].set_xscale("log")          
+        axs[1].set_title(f'Lomb Scargle from {self.x_min} to {self.x_max}', fontsize=16)
+        axs[1].legend(fontsize=14)
+        axs[1].grid(True, linestyle='--', alpha=0.7)
+        inset_ax = fig.add_axes([0.835, 0.45, 0.13, 0.13])  # [left, bottom, width, height]
+        inset_ax.plot(self.data[:, 1], self.data[:, 4], color='r')
+        inset_ax.invert_yaxis()
+        #inset_ax.set_xlabel('Time (days)')
+        #inset_ax.set_ylabel('Magnitude')
+        inset_ax.set_title('Part of Light Curve for Periodogram', fontsize='12')
+        inset_ax.grid(False)
+        inset_ax.set_ylim(19.3, 14)
+        inset_ax.legend(fontsize=9)
+        plt.show()
+
+        
