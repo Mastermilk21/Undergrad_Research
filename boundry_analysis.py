@@ -132,43 +132,48 @@ class BoundryLightCurve:
         plt.tight_layout()
         plt.show()
 
-    def phasefold(self):
-        self.time = self.data[:, 1]  
-        self.magnitude = self.data[:, 4] 
-        significant_peak_index = self.peaks[np.argmax(self.power[self.peaks])]
-        peak_period = self.period_days[significant_peak_index]
-        print('Peak period is:', peak_period, 'days')
+    def phasefold(self, period1, period2=None):
+        """
+        Phase-fold the light curve using one or two user-specified periods.
         
-        phase = (self.time % self.highest_periodicity) / self.highest_periodicity
-        id = np.argsort(phase)
-        phase_sorted = phase[id]
-        self.magnitude_sorted = self.magnitude[id]
-        
-        fig, axs = plt.subplots(1, 2, figsize=(20, 8))
-        
-        axs[0].plot(phase_sorted, self.magnitude_sorted, label='Light Curve', color='blue')
+        Parameters:
+        - period1 (float): Required. Period in days for the first phase-fold plot.
+        - period2 (float): Optional. Period in days for the second phase-fold plot.
+        """
+        self.time = self.data[:, 1]
+        self.magnitude = self.data[:, 4]
+
+        # Prepare plot
+        if period2 is not None:
+            fig, axs = plt.subplots(1, 2, figsize=(20, 8))
+        else:
+            fig, ax = plt.subplots(1, 1, figsize=(10, 8))
+            axs = [ax]
+
+        # Phase-fold for period1
+        phase1 = (self.time % period1) / period1
+        idx1 = np.argsort(phase1)
+        axs[0].plot(phase1[idx1], self.magnitude[idx1], color='blue')
         axs[0].set_xlabel("Phase", fontsize=14)
         axs[0].set_ylabel("Magnitude", fontsize=14)
-        axs[0].set_title(f'Phase Folded Light Curve using period: {self.highest_periodicity:.4f} days', fontsize=16)
+        axs[0].set_title(f'Phase Folded (Period = {period1:.5f} days)', fontsize=16)
         axs[0].invert_yaxis()
-        axs[0].legend(fontsize=12)
         axs[0].grid(True, linestyle='--', alpha=0.7)
 
-        phase_2 = (self.time % self.highest_periodicity_2) / self.highest_periodicity_2
-        id_2 = np.argsort(phase_2)
-        phase_sorted_2 = phase_2[id_2]
-        self.magnitude_sorted_2 = self.magnitude[id_2]
-        
-        axs[1].plot(phase_sorted_2, self.magnitude_sorted_2, label='Light Curve', color='green')
-        axs[1].set_xlabel("Phase", fontsize=14)
-        axs[1].set_ylabel("Magnitude", fontsize=14)
-        axs[1].set_title(f'Phase Folded Light Curve using period: {self.highest_periodicity_2:.4f} days', fontsize=16)
-        axs[1].invert_yaxis()
-        axs[1].legend(fontsize=12)
-        axs[1].grid(True, linestyle='--', alpha=0.7)
+        # Phase-fold for period2 if provided
+        if period2 is not None:
+            phase2 = (self.time % period2) / period2
+            idx2 = np.argsort(phase2)
+            axs[1].plot(phase2[idx2], self.magnitude[idx2], color='green')
+            axs[1].set_xlabel("Phase", fontsize=14)
+            axs[1].set_ylabel("Magnitude", fontsize=14)
+            axs[1].set_title(f'Phase Folded (Period = {period2:.5f} days)', fontsize=16)
+            axs[1].invert_yaxis()
+            axs[1].grid(True, linestyle='--', alpha=0.7)
 
         plt.tight_layout()
         plt.show()
+
 
     def bounded_lightcurve(self):
         plt.rcParams.update({'font.size': 16}) 
